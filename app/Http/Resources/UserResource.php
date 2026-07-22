@@ -50,6 +50,7 @@ class UserResource extends JsonResource
 
         return [
             'id' => $this->id,
+            'peer_id' => $this->peer_id,
             'public_profile_slug' => $this->public_profile_slug,
             'profile_photo_id' => $profilePhotoId,
             'cover_photo_id' => $coverPhotoId,

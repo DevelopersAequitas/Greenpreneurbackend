@@ -621,6 +621,7 @@ class AuthController extends BaseApiController
         }
 
         $payload = $user->toArray();
+        $payload['peer_id'] = $user->peer_id;
         $mainBusinessCategory = $user->mainBusinessCategory;
         $businessCategory = $user->businessCategory;
         $referrer = $user->referredByUser ?? $user->introducedBy;

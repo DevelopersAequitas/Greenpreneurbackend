@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
@@ -43,6 +45,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'id',
+        'peer_id',
         'first_name',
         'last_name',
         'display_name',
@@ -278,6 +281,16 @@ class User extends Authenticatable
             if (empty($user->display_name)) {
                 $user->display_name = trim($user->first_name.' '.($user->last_name ?? ''));
             }
+
+            if (empty($user->peer_id) && Schema::hasTable('users') && Schema::hasColumn('users', 'peer_id')) {
+                $user->peer_id = static::generateNextPeerId();
+            }
+        });
+
+        static::updating(function (self $user): void {
+            if ($user->isDirty('peer_id') && $user->getOriginal('peer_id') !== null) {
+                $user->peer_id = $user->getOriginal('peer_id');
+            }
         });
 
         static::saved(function (self $user): void {
@@ -285,6 +298,30 @@ class User extends Authenticatable
                 app(DistrictSyncService::class)->syncFromUser($user);
             }
         });
+    }
+
+    public static function generateNextPeerId(): string
+    {
+        $prefix = 'PG3182736';
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            return DB::selectOne("SELECT 'PG3182736' || nextval('users_peer_id_seq')::text AS peer_id")->peer_id;
+        }
+
+        // Reliable SQLite fallback for PHPUnit test environments
+        $maxSeq = 0;
+        if (Schema::hasTable('users') && Schema::hasColumn('users', 'peer_id')) {
+            $existingPeerIds = DB::table('users')->whereNotNull('peer_id')->pluck('peer_id');
+            foreach ($existingPeerIds as $pid) {
+                if (str_starts_with((string) $pid, $prefix)) {
+                    $seq = (int) substr((string) $pid, strlen($prefix));
+                    if ($seq > $maxSeq) {
+                        $maxSeq = $seq;
+                    }
+                }
+            }
+        }
+
+        return $prefix.($maxSeq + 1);
     }
 
     public function syncCoinMilestoneAttributes(): bool

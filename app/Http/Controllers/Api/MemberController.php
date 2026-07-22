@@ -25,6 +25,7 @@ class MemberController extends BaseApiController
     {
         $selectColumns = [
             'id',
+            'peer_id',
             'public_profile_slug',
             'first_name',
             'last_name',
@@ -287,6 +288,7 @@ class MemberController extends BaseApiController
     {
         $selectColumns = [
             'id',
+            'peer_id',
             'first_name',
             'last_name',
             'display_name',
