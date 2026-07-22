@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountDeletionController;
+use App\Http\Controllers\Api\AccountDeletionController as ApiAccountDeletionController;
 use App\Http\Controllers\Api\Activities\BusinessDealHistoryController;
 use App\Http\Controllers\Api\Activities\P2pMeetingHistoryController;
 use App\Http\Controllers\Api\Activities\ReferralHistoryController;
@@ -180,6 +181,7 @@ Route::prefix('v1')->group(function () {
         Route::middleware(['auth:sanctum', 'unity.user'])->group(function () {
             Route::post('logout', [AuthController::class, 'logout']);
             Route::get('me', [AuthController::class, 'me']);
+            Route::post('request-account-deletion', [ApiAccountDeletionController::class, 'store']);
         });
     });
 
